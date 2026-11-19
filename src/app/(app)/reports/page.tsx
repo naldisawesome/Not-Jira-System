@@ -10,6 +10,7 @@ import { Badge, EmptyState, Progress } from "@/components/ui/misc";
 import { Button } from "@/components/ui/button";
 import { StackedBars, TrendChart } from "@/components/dashboard/charts";
 import { PrintButton } from "@/components/print-button";
+import { PhaseBadge } from "@/components/projects/phase-badge";
 import { ProjectSwitcher } from "@/components/work/project-switcher";
 import { PriorityBadge } from "@/components/tasks/badges";
 import { PRIORITIES, SEVERITIES, typeMeta } from "@/lib/constants";
@@ -39,9 +40,9 @@ export default async function ReportsPage({ searchParams }: { searchParams: { pr
         <CardHeader title="Project completion" description="Progress excludes cancelled tasks" action={<Csv k="projects" project={pid} />} />
         <CardContent className="overflow-x-auto p-0">
           <table className="w-full min-w-[640px] text-[13px]">
-            <thead className="border-y bg-muted/40"><tr><th className={th}>Project</th><th className={th}>Status</th><th className={th}>Due</th><th className={th}>Tasks</th><th className={th}>Open</th><th className={th}>Overdue</th><th className={cn(th, "w-[220px]")}>Completion</th></tr></thead>
+            <thead className="border-y bg-muted/40"><tr><th className={th}>Project</th><th className={th}>Phase</th><th className={th}>Status</th><th className={th}>Due</th><th className={th}>Tasks</th><th className={th}>Open</th><th className={th}>Overdue</th><th className={cn(th, "w-[220px]")}>Completion</th></tr></thead>
             <tbody>{r.projects.map((p) => (
-              <tr key={p.key} className="border-b last:border-0"><td className="px-3 py-2 font-medium">{p.project} <span className="task-key">{p.key}</span></td><td className="px-3 py-2"><Badge>{p.status.replace("_", " ")}</Badge></td><td className={td}>{fmtDate(p.due_date)}</td><td className={td}>{p.total}</td><td className={td}>{p.open}</td><td className={cn(td, p.overdue > 0 && "font-medium text-destructive")}>{p.overdue}</td><td className="px-3 py-2"><div className="flex items-center gap-2"><Progress value={p.pct} /><span className="w-9 text-right text-xs font-semibold">{p.pct}%</span></div></td></tr>
+              <tr key={p.key} className="border-b last:border-0"><td className="px-3 py-2 font-medium">{p.project} <span className="task-key">{p.key}</span></td><td className="px-3 py-2"><PhaseBadge phase={p.phase} /></td><td className="px-3 py-2"><Badge>{p.status.replace("_", " ")}</Badge></td><td className={td}>{fmtDate(p.due_date)}</td><td className={td}>{p.total}</td><td className={td}>{p.open}</td><td className={cn(td, p.overdue > 0 && "font-medium text-destructive")}>{p.overdue}</td><td className="px-3 py-2"><div className="flex items-center gap-2"><Progress value={p.pct} /><span className="w-9 text-right text-xs font-semibold">{p.pct}%</span></div></td></tr>
             ))}</tbody>
           </table>
         </CardContent>

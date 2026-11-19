@@ -9,7 +9,8 @@ import { action } from "../action";
 import { AuthzError, NotFoundError, assertUsersInOrg, can, requireProject } from "../rbac";
 import { logActivity, notify } from "../activity";
 import { storage } from "../storage";
-import { projectSchema, zId, zDate, zPriority } from "@/lib/validators";
+import { projectSchema, zId, zDate, zPriority, zPhase } from "@/lib/validators";
+import { phaseMeta } from "@/lib/constants";
 
 async function defaultWorkflowId(orgId: string) {
   const [wf] = await db.select().from(workflows).where(and(eq(workflows.orgId, orgId), eq(workflows.isDefault, true))).limit(1);
@@ -42,6 +43,7 @@ export const createProject = action(projectSchema, async (input, user) => {
         color: input.color,
         status: input.status,
         priority: input.priority,
+        phase: input.phase,
         ownerId,
         startDate: input.startDate ?? null,
         dueDate: input.dueDate ?? null,
@@ -60,7 +62,7 @@ export const createProject = action(projectSchema, async (input, user) => {
 });
 
 export const updateProject = action(
-  z.object({ id: zId, data: z.object({ name: z.string().trim().min(2).max(120), description: z.string().max(20000).nullable(), category: z.string().max(60).nullable(), color: z.string().regex(/^#[0-9a-fA-F]{6}$/), status: z.enum(["planning", "active", "on_hold", "completed"]), priority: zPriority, ownerId: zId.nullable(), startDate: zDate, dueDate: zDate, coverAttachmentId: zId.nullable(), workflowId: zId }).partial() }),
+  z.object({ id: zId, data: z.object({ name: z.string().trim().min(2).max(120), description: z.string().max(20000).nullable(), category: z.string().max(60).nullable(), color: z.string().regex(/^#[0-9a-fA-F]{6}$/), status: z.enum(["planning", "active", "on_hold", "completed"]), priority: zPriority, phase: zPhase, ownerId: zId.nullable(), startDate: zDate, dueDate: zDate, coverAttachmentId: zId.nullable(), workflowId: zId }).partial() }),
   async ({ id, data }, user) => {
     const { project } = await requireProject(user, id, "manage");
     await assertUsersInOrg(user.orgId, [data.ownerId]);
@@ -88,6 +90,8 @@ export const updateProject = action(
       await tx.update(projects).set({ ...data, updatedAt: new Date() }).where(eq(projects.id, id));
       if (data.ownerId) await tx.insert(projectMembers).values({ projectId: id, userId: data.ownerId, role: "lead" }).onConflictDoUpdate({ target: [projectMembers.projectId, projectMembers.userId], set: { role: "lead" } });
       await logActivity(tx, { orgId: user.orgId, actorId: user.id, entity: "project", action: "updated", projectId: id, meta: { fields: Object.keys(data) } });
+      if (data.phase && data.phase !== project.phase)
+        await logActivity(tx, { orgId: user.orgId, actorId: user.id, entity: "project", action: "phase_changed", projectId: id, meta: { from: phaseMeta(project.phase).label, to: phaseMeta(data.phase).label } });
     });
     revalidatePath("/", "layout");
     return { id };

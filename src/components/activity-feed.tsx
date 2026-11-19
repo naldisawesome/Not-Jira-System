@@ -19,6 +19,7 @@ function describe(a: ActivityRow) {
     case "attachment.deleted": return <>removed <b className="font-medium">{m.fileName}</b> from {t}</>;
     case "time.logged": return <>logged {m.hours}h on {t}</>;
     case "project.created": return <>created project <Link href={`/projects/${a.projectId}`} className="font-medium text-foreground hover:underline">{a.projectName ?? m.name}</Link></>;
+    case "project.phase_changed": return <>moved <b className="font-medium">{a.projectName}</b> from {m.from} to <b className="font-medium">{m.to}</b></>;
     case "project.updated": return <>updated project <b className="font-medium">{a.projectName}</b></>;
     case "project.archived": return <>archived <b className="font-medium">{a.projectName}</b></>;
     case "project.restored": return <>restored <b className="font-medium">{a.projectName}</b></>;

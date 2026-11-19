@@ -47,6 +47,18 @@ export const DEFAULT_STATUSES: { name: string; category: StatusCategory; color: 
   { name: "Cancelled", category: "cancelled", color: "#a1a1aa" },
 ];
 
+export const PROJECT_PHASES = [
+  { value: "planning", label: "Planning", color: "#64748b", description: "Scoping and requirements" },
+  { value: "development", label: "Development", color: "#2563eb", description: "Being built" },
+  { value: "testing", label: "Testing / UAT", color: "#7c3aed", description: "QA and user acceptance testing" },
+  { value: "staging", label: "Staging", color: "#d97706", description: "On a staging copy, not yet live" },
+  { value: "production", label: "Production", color: "#16a34a", description: "Live and in use" },
+  { value: "maintenance", label: "Maintenance", color: "#0891b2", description: "Live; fixes and small updates only" },
+  { value: "retired", label: "Retired", color: "#a1a1aa", description: "No longer in use" },
+] as const;
+export type ProjectPhase = (typeof PROJECT_PHASES)[number]["value"];
+export const phaseMeta = (v: string) => PROJECT_PHASES.find((p) => p.value === v) ?? PROJECT_PHASES[1];
+
 export const PROJECT_STATUSES = [
   { value: "planning", label: "Planning", color: "#64748b" },
   { value: "active", label: "Active", color: "#0f766e" },

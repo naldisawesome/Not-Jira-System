@@ -191,6 +191,8 @@ export const projects = pgTable(
     ownerId: uuid("owner_id").references(() => users.id, { onDelete: "set null" }),
     category: varchar("category", { length: 60 }),
     status: projectStatus("status").notNull().default("active"),
+    // Development phase / environment tag (Planning, Development, Testing, Staging, Production, Maintenance, Retired)
+    phase: varchar("phase", { length: 20 }).notNull().default("development"),
     priority: priority("priority").notNull().default("medium"),
     startDate: date("start_date"),
     dueDate: date("due_date"),

@@ -1,0 +1,1 @@
+ALTER TABLE "projects" ADD COLUMN IF NOT EXISTS "phase" varchar(20) DEFAULT 'development' NOT NULL;

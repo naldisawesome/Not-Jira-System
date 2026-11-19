@@ -7,7 +7,7 @@ import { can, getProjectAccess, visibleProjectIds } from "@/server/rbac";
 import { createTask } from "@/server/actions/tasks";
 import { createProject } from "@/server/actions/projects";
 import { parseCSV } from "@/lib/csv";
-import { PRIORITIES, PROJECT_COLORS, TASK_TYPES } from "@/lib/constants";
+import { PRIORITIES, PROJECT_COLORS, PROJECT_PHASES, TASK_TYPES } from "@/lib/constants";
 import { logActivity } from "@/server/activity";
 
 export const runtime = "nodejs";
@@ -58,9 +58,13 @@ export async function POST(req: Request) {
   const orgProjects = visible.length ? await db.select().from(projects).where(and(eq(projects.orgId, user.orgId), inArray(projects.id, visible))) : [];
   const byKey = new Map(orgProjects.map((p) => [p.key.toUpperCase(), p]));
   const wantedKeys = new Map<string, string>(); // key -> name
+  const wantedPhase = new Map<string, string>(); // key -> phase
   for (const r of data) {
     const key = col(r, "project_key", "project").toUpperCase();
     if (key) wantedKeys.set(key, wantedKeys.get(key) || col(r, "project_name") || key);
+    const ph = col(r, "project_phase", "phase").toLowerCase();
+    const phase = PROJECT_PHASES.find((x) => x.value === ph || x.label.toLowerCase() === ph || (ph === "uat" && x.value === "testing") || (ph === "live" && x.value === "production"));
+    if (key && phase && !wantedPhase.has(key)) wantedPhase.set(key, phase.value);
   }
   const toCreate = [...wantedKeys].filter(([k]) => !byKey.has(k));
   const errors: string[] = [];
@@ -106,7 +110,7 @@ export async function POST(req: Request) {
 
   // ── Create missing projects ──
   for (const [i, [key, name]] of toCreate.entries()) {
-    const r = await createProject({ name: name.length >= 2 ? name : `${key} project`, key, color: PROJECT_COLORS[(orgProjects.length + i) % PROJECT_COLORS.length]!, status: "active", priority: "medium", memberIds: [] });
+    const r = await createProject({ name: name.length >= 2 ? name : `${key} project`, key, color: PROJECT_COLORS[(orgProjects.length + i) % PROJECT_COLORS.length]!, status: "active", priority: "medium", phase: (wantedPhase.get(key) ?? "development") as never, memberIds: [] });
     if (!r.ok) return NextResponse.json({ error: `Couldn't create project ${key}: ${r.error}` }, { status: r.status ?? 400 });
     const [p] = await db.select().from(projects).where(eq(projects.id, r.data.id));
     byKey.set(key, p!);

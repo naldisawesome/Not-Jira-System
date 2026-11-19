@@ -111,7 +111,7 @@ async function main() {
   for (const [pi, pd] of projectDefs.entries()) {
     const [p] = await db
       .insert(s.projects)
-      .values({ orgId, workflowId: wf!.id, name: pd.name, key: pd.key, description: pd.desc, color: pd.color, category: pd.category, ownerId: pd.owner.id, status: pd.key === "OPS" ? "on_hold" : "active", priority: pi === 0 ? "high" : "medium", startDate: d(pd.start), dueDate: d(pd.due), taskCounter: titles[pd.key]!.length })
+      .values({ orgId, workflowId: wf!.id, phase: ({ WEB: "staging", APP: "development", CRM: "testing", OPS: "production" } as Record<string, string>)[pd.key] ?? "development", name: pd.name, key: pd.key, description: pd.desc, color: pd.color, category: pd.category, ownerId: pd.owner.id, status: pd.key === "OPS" ? "on_hold" : "active", priority: pi === 0 ? "high" : "medium", startDate: d(pd.start), dueDate: d(pd.due), taskCounter: titles[pd.key]!.length })
       .returning();
     const memberIds = Array.from(new Set([pd.owner.id, ...pd.members.map((m) => m!.id)]));
     await db.insert(s.projectMembers).values(memberIds.map((userId) => ({ projectId: p!.id, userId, role: userId === pd.owner.id ? ("lead" as const) : userId === sofia!.id ? ("viewer" as const) : ("member" as const) })));

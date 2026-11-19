@@ -10,6 +10,7 @@ import { ActivityFeed } from "@/components/activity-feed";
 import { DonutChart, HBarChart } from "@/components/dashboard/charts";
 import { TaskLine } from "@/components/tasks/task-line";
 import { AutoRefresh } from "@/components/auto-refresh";
+import { PhaseBadge } from "@/components/projects/phase-badge";
 import { PRIORITIES, STATUS_CATEGORIES } from "@/lib/constants";
 import { cn, fmtDate } from "@/lib/utils";
 
@@ -94,6 +95,7 @@ export default async function OverviewPage() {
                   <div className="flex min-w-0 items-center gap-2">
                     <span className="flex size-6 shrink-0 items-center justify-center rounded-md text-[10px] font-bold text-white" style={{ background: p.project.color }}>{p.project.key.slice(0, 2)}</span>
                     <span className="truncate text-[13px] font-medium group-hover:underline">{p.project.name}</span>
+                    <PhaseBadge phase={p.project.phase} className="hidden px-1.5 text-[9.5px] xl:inline-flex" />
                   </div>
                   <Progress value={pct} color={p.project.color} className="order-3 col-span-2 h-2 sm:order-none sm:col-span-1" />
                   <div className="flex items-center gap-3 text-xs tabular-nums text-muted-foreground">

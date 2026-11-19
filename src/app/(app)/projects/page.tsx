@@ -12,12 +12,13 @@ import { PriorityBadge } from "@/components/tasks/badges";
 import { NewProjectButton } from "@/components/projects/new-project-button";
 import { ProjectActions } from "@/components/projects/project-actions";
 import { ImportDialog } from "@/components/work/import-dialog";
-import { PROJECT_STATUSES } from "@/lib/constants";
+import { PROJECT_PHASES, PROJECT_STATUSES } from "@/lib/constants";
+import { PhaseBadge } from "@/components/projects/phase-badge";
 import { cn, fmtDate } from "@/lib/utils";
 
 export const metadata = { title: "Projects" };
 
-export default async function ProjectsPage({ searchParams }: { searchParams: { view?: string; q?: string } }) {
+export default async function ProjectsPage({ searchParams }: { searchParams: { view?: string; q?: string; phase?: string } }) {
   const user = await requireUser();
   const view = searchParams.view === "archived" ? "archived" : searchParams.view === "active" ? "active" : "all";
   const [all, wfs, memberships] = await Promise.all([
@@ -28,6 +29,7 @@ export default async function ProjectsPage({ searchParams }: { searchParams: { v
   const q = (searchParams.q ?? "").toLowerCase();
   const rows = all
     .filter((r) => (view === "archived" ? !!r.project.archivedAt : view === "active" ? !r.project.archivedAt && r.project.status === "active" : !r.project.archivedAt))
+    .filter((r) => !searchParams.phase || r.project.phase === searchParams.phase)
     .filter((r) => !q || r.project.name.toLowerCase().includes(q) || r.project.key.toLowerCase().includes(q) || (r.project.category ?? "").toLowerCase().includes(q));
   const tabs = [
     { v: "all", label: "All projects", count: all.filter((r) => !r.project.archivedAt).length },
@@ -46,7 +48,24 @@ export default async function ProjectsPage({ searchParams }: { searchParams: { v
             </Link>
           ))}
         </div>
-        <form className="w-full sm:w-64"><input type="hidden" name="view" value={view === "all" ? "" : view} /><input name="q" defaultValue={searchParams.q} placeholder="Filter projects…" className="h-9 w-full rounded-md border bg-surface px-3 text-sm outline-none focus:ring-2 focus:ring-ring/30" /></form>
+        <form className="w-full sm:w-64"><input type="hidden" name="view" value={view === "all" ? "" : view} />{searchParams.phase && <input type="hidden" name="phase" value={searchParams.phase} />}<input name="q" defaultValue={searchParams.q} placeholder="Filter projects…" className="h-9 w-full rounded-md border bg-surface px-3 text-sm outline-none focus:ring-2 focus:ring-ring/30" /></form>
+      </div>
+      <div className="mb-5 flex flex-wrap items-center gap-1.5">
+        <span className="mr-1 text-xs font-medium text-muted-foreground">Phase</span>
+        {[{ value: "", label: "All" }, ...PROJECT_PHASES].map((ph) => {
+          const params = new URLSearchParams();
+          if (view !== "all") params.set("view", view);
+          if (searchParams.q) params.set("q", searchParams.q);
+          if (ph.value) params.set("phase", ph.value);
+          const count = all.filter((r) => (view === "archived" ? !!r.project.archivedAt : !r.project.archivedAt) && (!ph.value || r.project.phase === ph.value)).length;
+          const active = (searchParams.phase ?? "") === ph.value;
+          return (
+            <Link key={ph.value || "all"} href={`/projects${params.size ? `?${params}` : ""}`} className={cn("flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs transition-colors hover:bg-muted", active && "border-primary bg-accent font-medium text-accent-foreground")}>
+              {"color" in ph && <span className="size-1.5 rounded-full" style={{ background: ph.color }} />}
+              {ph.label}<span className="tabular-nums text-muted-foreground">{count}</span>
+            </Link>
+          );
+        })}
       </div>
       {rows.length === 0 ? (
         <EmptyState icon={FolderKanban} title={view === "archived" ? "No archived projects" : "No projects found"} description={view === "archived" ? "Archived projects are read-only and appear here." : "Create a project or ask to be added to one."} />
@@ -70,6 +89,7 @@ export default async function ProjectsPage({ searchParams }: { searchParams: { v
                   </Link>
                   <p className="mt-0.5 line-clamp-2 min-h-[2.5em] text-xs text-muted-foreground">{p.description?.replace(/[#*_>`[\]()!-]/g, "").slice(0, 160) || "No description"}</p>
                   <div className="mt-3 flex flex-wrap items-center gap-1.5">
+                    <PhaseBadge phase={p.phase} />
                     <Badge color={st.color}>{st.label}</Badge>
                     <PriorityBadge priority={p.priority} />
                     {p.category && <Badge>{p.category}</Badge>}
