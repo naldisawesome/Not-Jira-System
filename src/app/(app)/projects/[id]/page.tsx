@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { ArrowUpRight } from "lucide-react";
 import { and, eq, isNull, sql } from "drizzle-orm";
 import { requireUser } from "@/server/session";
 import { getProjectAccess } from "@/server/rbac";
@@ -39,8 +40,17 @@ export default async function ProjectOverview({ params }: { params: { id: string
           <CardContent>{p.description ? <Markdown>{p.description}</Markdown> : <p className="text-sm text-muted-foreground">No description yet.{access.canManage && <> Add one in <Link className="text-primary hover:underline" href={`/projects/${p.id}/settings`}>settings</Link>.</>}</p>}</CardContent>
         </Card>
         <div className="grid gap-3 sm:grid-cols-4">
-          {[["Progress", `${pct}%`], ["Open tasks", t.open], ["Overdue", t.overdue], ["Open issues", t.open_issues]].map(([l, v]) => (
-            <div key={l as string} className="rounded-xl border bg-card p-4 shadow-soft"><p className="text-xs text-muted-foreground">{l}</p><p className="mt-1 text-2xl font-semibold tabular-nums">{v}</p>{l === "Progress" && <Progress value={pct} color={p.color} className="mt-2" />}</div>
+          {([
+            ["Progress", `${pct}%`, "category=done", "Completed tasks"],
+            ["Open tasks", t.open, "category=open", "All tasks not done or cancelled"],
+            ["Overdue", t.overdue, "due=overdue", "Open tasks past their due date"],
+            ["Open issues", t.open_issues, "type=bug,support&category=open", "Open bugs and support requests"],
+          ] as const).map(([l, v, q, hint]) => (
+            <Link key={l} href={`/projects/${p.id}/list?${q}`} title={hint} className="group rounded-xl border bg-card p-4 shadow-soft transition-all hover:-translate-y-px hover:border-primary/40 hover:shadow-lift focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40">
+              <p className="flex items-center justify-between text-xs text-muted-foreground">{l}<ArrowUpRight className="size-3.5 opacity-0 transition-opacity group-hover:opacity-100" /></p>
+              <p className={`mt-1 text-2xl font-semibold tabular-nums ${l === "Overdue" && Number(v) > 0 ? "text-destructive" : ""}`}>{v}</p>
+              {l === "Progress" && <Progress value={pct} color={p.color} className="mt-2" />}
+            </Link>
           ))}
         </div>
         <Card>

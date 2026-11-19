@@ -60,7 +60,10 @@ export async function listTasks(
   if (f.category === "open") where.push(sql`${workflowStatuses.category} NOT IN ('done','cancelled')`);
   else if (f.category) where.push(sql`${workflowStatuses.category} = ${f.category}`);
   if (f.priority) where.push(sql`${tasks.priority} = ${f.priority}`);
-  if (f.type) where.push(sql`${tasks.type} = ${f.type}`);
+  if (f.type) {
+    const types = f.type.split(",").map((t) => t.trim()).filter(Boolean);
+    where.push(types.length > 1 ? sql`${tasks.type}::text IN (${sql.join(types.map((t) => sql`${t}`), sql`, `)})` : sql`${tasks.type} = ${types[0]}`);
+  }
   if (f.assignee === "me") where.push(eq(tasks.assigneeId, user.id));
   else if (f.assignee === "none") where.push(isNull(tasks.assigneeId));
   else if (f.assignee) where.push(eq(tasks.assigneeId, f.assignee));

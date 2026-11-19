@@ -86,6 +86,7 @@ export function FilterBar({ saved, projectScoped, show = ["assignee", "priority"
       {show.includes("type") && (
         <NativeSelect className={sel} value={sp.get("type") ?? ""} onChange={(e) => set("type", e.target.value)} aria-label="Type">
           <option value="">Any type</option>
+          <option value="bug,support">Issues (bugs & support)</option>
           {TASK_TYPES.map((t) => <option key={t.value} value={t.value}>{t.label}</option>)}
         </NativeSelect>
       )}

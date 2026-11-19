@@ -9,6 +9,7 @@ import { PriorityBadge } from "@/components/tasks/badges";
 import { ProjectTabs } from "@/components/projects/project-tabs";
 import { ProjectActions } from "@/components/projects/project-actions";
 import { QuickAddButton } from "@/components/tasks/quick-add-button";
+import { ImportDialog } from "@/components/work/import-dialog";
 import { PROJECT_STATUSES } from "@/lib/constants";
 import { fmtDate } from "@/lib/utils";
 
@@ -35,6 +36,7 @@ export default async function ProjectLayout({ params, children }: { params: { id
         </div>
         <div className="ml-auto flex items-center gap-2">
           <AvatarStack users={ctx.members} max={5} size={26} />
+          {access.canEdit && <ImportDialog projectId={p.id} />}
           {access.canEdit && <QuickAddButton projectId={p.id}><Plus /> Add task</QuickAddButton>}
           <ProjectActions id={p.id} projectKey={p.key} name={p.name} archived={!!p.archivedAt} canManage={access.canManage} />
         </div>

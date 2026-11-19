@@ -79,7 +79,7 @@ export default async function OverviewPage() {
         <Stat label="Total tasks" value={t.total} icon={ListTodo} tone="#7c3aed" href="/list" />
         <Stat label="Completed" value={t.done} icon={CircleCheckBig} tone="#16a34a" href="/list?category=done" hint={t.total ? `${Math.round((t.done / t.total) * 100)}% of all tasks` : undefined} />
         <Stat label="Overdue" value={t.overdue} icon={AlarmClock} tone="#dc2626" href="/list?due=overdue" />
-        <Stat label="Open issues" value={t.open_issues} icon={Bug} tone="#ea580c" href="/list?type=bug&category=open" />
+        <Stat label="Open issues" value={t.open_issues} icon={Bug} tone="#ea580c" href="/list?type=bug,support&category=open" />
         <Stat label="Team members" value={members.filter((m) => m.isActive).length} icon={Users} tone="#0891b2" href="/members" />
       </div>
 

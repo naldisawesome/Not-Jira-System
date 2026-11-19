@@ -23,6 +23,7 @@ function describe(a: ActivityRow) {
     case "project.archived": return <>archived <b className="font-medium">{a.projectName}</b></>;
     case "project.restored": return <>restored <b className="font-medium">{a.projectName}</b></>;
     case "project.deleted": return <>deleted project <b className="font-medium">{m.name}</b></>;
+    case "project.imported": return <>imported <b className="font-medium">{m.count} tasks</b> into <b className="font-medium">{a.projectName}</b> from {m.file}</>;
     case "project.member_set": return <>updated members of <b className="font-medium">{a.projectName}</b></>;
     case "project.member_removed": return <>removed a member from <b className="font-medium">{a.projectName}</b></>;
     case "sprint.created": return <>created sprint <b className="font-medium">{m.name}</b></>;

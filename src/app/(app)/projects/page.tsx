@@ -11,6 +11,7 @@ import { AvatarStack, Badge, EmptyState, Progress } from "@/components/ui/misc";
 import { PriorityBadge } from "@/components/tasks/badges";
 import { NewProjectButton } from "@/components/projects/new-project-button";
 import { ProjectActions } from "@/components/projects/project-actions";
+import { ImportDialog } from "@/components/work/import-dialog";
 import { PROJECT_STATUSES } from "@/lib/constants";
 import { cn, fmtDate } from "@/lib/utils";
 
@@ -36,7 +37,7 @@ export default async function ProjectsPage({ searchParams }: { searchParams: { v
 
   return (
     <div className="mx-auto max-w-[1400px] animate-fade-in">
-      <PageHeader title="Projects" description="Every project has its own workspace with board, list, calendar, timeline, sprints and files." actions={can.createProject(user) && <NewProjectButton workflows={wfs} />} />
+      <PageHeader title="Projects" description="Every project has its own workspace with board, list, calendar, timeline, sprints and files." actions={<>{user.role !== "viewer" && <ImportDialog size="default" />}{can.createProject(user) && <NewProjectButton workflows={wfs} />}</>} />
       <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
         <div className="inline-flex gap-0.5 rounded-lg bg-muted p-0.5">
           {tabs.map((t) => (

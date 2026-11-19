@@ -96,7 +96,7 @@ export async function WorkView({ user, view, projectId: fixedProject, sp }: { us
       {view !== "sprints" ? (
         <FilterBar saved={saved} projectScoped={projectId} show={view === "backlog" ? ["assignee", "priority", "type", "label"] : undefined}>
           {switcher}
-          {view === "list" && <ListTools projectId={projectId} canImport={!!access?.canEdit} />}
+          {view === "list" && <ListTools projectId={projectId} canImport={access ? access.canEdit : user.role !== "viewer"} />}
         </FilterBar>
       ) : switcher && <div className="mb-4 flex justify-end">{switcher}</div>}
       {body}
