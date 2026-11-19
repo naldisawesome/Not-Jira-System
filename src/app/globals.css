@@ -50,6 +50,11 @@
     --input: 222 10% 20%;
     --ring: 166 60% 46%;
   }
+  /* Native controls (select dropdown lists, date pickers, scrollbars) follow the app theme. */
+  :root { color-scheme: light; }
+  .dark { color-scheme: dark; }
+  select option, select optgroup { background-color: hsl(var(--popover)); color: hsl(var(--popover-foreground)); }
+  select option:disabled { color: hsl(var(--muted-foreground)); }
   * { @apply border-border; }
   html { -webkit-font-smoothing: antialiased; }
   body { @apply bg-background text-foreground; font-feature-settings: "cv11", "ss01"; }
