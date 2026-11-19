@@ -6,7 +6,7 @@ import { attachments, comments } from "@/db/schema";
 import { getCurrentUser } from "@/server/session";
 import { requireProject, requireTask, AuthzError, NotFoundError } from "@/server/rbac";
 import { validateUpload, imageSize, UploadError } from "@/server/file-validation";
-import { storage } from "@/server/storage";
+import { storage, describeStorageError } from "@/server/storage";
 import { logActivity } from "@/server/activity";
 
 export const runtime = "nodejs";
@@ -51,7 +51,15 @@ export async function POST(req: Request) {
     const v = validateUpload(file.name, file.type, buf, context === "cover");
     const dims = v.mime.startsWith("image/") ? imageSize(v.ext, buf) : null;
     const key = `${user.orgId}/${projectId}/${randomUUID()}.${v.ext}`;
-    await storage().put(key, buf, v.mime);
+    try {
+      await storage().put(key, buf, v.mime);
+    } catch (se) {
+      const detail = describeStorageError(se);
+      console.error("[upload] storage put failed:", detail, se);
+      // Admins get the actionable detail; everyone else a generic message.
+      const isAdmin = user.role === "admin" || user.role === "super_admin";
+      return NextResponse.json({ error: isAdmin ? detail : "File storage is unavailable right now. Please tell your administrator." }, { status: 502 });
+    }
 
     const [row] = await db
       .insert(attachments)
