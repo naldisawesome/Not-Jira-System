@@ -20,7 +20,7 @@ export default async function ProjectSettingsPage({ params }: { params: { id: st
       <Card>
         <CardHeader title="Project details" />
         <CardContent>
-          <ProjectForm projectId={p.id} workflows={wfs} initial={{ name: p.name, key: p.key, description: p.description ?? "", category: p.category ?? "", color: p.color, status: p.status === "archived" ? "active" : p.status, priority: p.priority, ownerId: p.ownerId ?? undefined, startDate: p.startDate ?? "", dueDate: p.dueDate ?? "", memberIds: [], workflowId: p.workflowId }} />
+          <ProjectForm projectId={p.id} workflows={wfs} initial={{ name: p.name, key: p.key, description: p.description ?? "", category: p.category ?? "", color: p.color, status: p.status === "archived" ? "active" : p.status, priority: p.priority, phase: p.phase as never, ownerId: p.ownerId ?? undefined, startDate: p.startDate ?? "", dueDate: p.dueDate ?? "", memberIds: [], workflowId: p.workflowId }} />
         </CardContent>
       </Card>
       <div className="space-y-5">

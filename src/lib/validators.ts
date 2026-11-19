@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { PRIORITIES, TASK_TYPES, ROLES, SEVERITIES } from "./constants";
+import { PRIORITIES, TASK_TYPES, ROLES, SEVERITIES, PROJECT_PHASES } from "./constants";
 
 const enumOf = <T extends { value: string }>(arr: readonly T[]) => z.enum(arr.map((a) => a.value) as [T["value"], ...T["value"][]]);
 
@@ -7,6 +7,7 @@ export const zPriority = enumOf(PRIORITIES);
 export const zTaskType = enumOf(TASK_TYPES);
 export const zRole = enumOf(ROLES);
 export const zSeverity = enumOf(SEVERITIES);
+export const zPhase = enumOf(PROJECT_PHASES);
 export const zId = z.string().uuid();
 export const zDate = z
   .string()
@@ -29,6 +30,7 @@ export const projectSchema = z
     color: z.string().regex(/^#[0-9a-fA-F]{6}$/).default("#0f766e"),
     status: z.enum(["planning", "active", "on_hold", "completed"]).default("active"),
     priority: zPriority.default("medium"),
+    phase: zPhase.default("development"),
     ownerId: zId.nullable().optional(),
     startDate: zDate,
     dueDate: zDate,

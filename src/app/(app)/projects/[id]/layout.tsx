@@ -7,6 +7,7 @@ import { getProjectContext } from "@/server/queries";
 import { AvatarStack, Badge } from "@/components/ui/misc";
 import { PriorityBadge } from "@/components/tasks/badges";
 import { ProjectTabs } from "@/components/projects/project-tabs";
+import { PhaseBadge } from "@/components/projects/phase-badge";
 import { ProjectActions } from "@/components/projects/project-actions";
 import { QuickAddButton } from "@/components/tasks/quick-add-button";
 import { ImportDialog } from "@/components/work/import-dialog";
@@ -26,7 +27,7 @@ export default async function ProjectLayout({ params, children }: { params: { id
       <div className="mb-3 flex flex-wrap items-center gap-3">
         <span className="flex size-10 items-center justify-center rounded-xl text-sm font-bold text-white shadow-soft" style={p.coverAttachmentId ? { backgroundImage: `url(/api/files/${p.coverAttachmentId})`, backgroundSize: "cover" } : { background: p.color }}>{p.coverAttachmentId ? "" : p.key.slice(0, 2)}</span>
         <div className="min-w-0">
-          <h1 className="flex items-center gap-2 text-xl font-semibold tracking-tight">{p.name} <span className="task-key text-xs">{p.key}</span></h1>
+          <h1 className="flex flex-wrap items-center gap-2 text-xl font-semibold tracking-tight">{p.name} <span className="task-key text-xs">{p.key}</span> <PhaseBadge phase={p.phase} /></h1>
           <div className="mt-0.5 flex flex-wrap items-center gap-1.5 text-xs text-muted-foreground">
             <Badge color={st.color}>{st.label}</Badge>
             <PriorityBadge priority={p.priority} />

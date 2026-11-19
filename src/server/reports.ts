@@ -16,8 +16,8 @@ export async function buildReports(user: SessionUser, projectId?: string) {
   const q = async <T,>(s: ReturnType<typeof sql>) => (await db.execute(s)).rows as T[];
 
   const [projects, completion, bugs, productivity, workload, overdue, sprintPerf, trend, byType, cycle] = await Promise.all([
-    q<{ project: string; key: string; status: string; due_date: string | null; total: number; done: number; open: number; overdue: number; pct: number }>(sql`
-      SELECT p.name AS project, p.key, p.status, p.due_date,
+    q<{ project: string; key: string; phase: string; status: string; due_date: string | null; total: number; done: number; open: number; overdue: number; pct: number }>(sql`
+      SELECT p.name AS project, p.key, p.phase, p.status, p.due_date,
         count(t.id)::int AS total,
         count(t.id) FILTER (WHERE s.category = 'done')::int AS done,
         count(t.id) FILTER (WHERE s.category NOT IN ('done','cancelled'))::int AS open,

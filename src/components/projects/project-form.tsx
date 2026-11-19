@@ -11,7 +11,7 @@ import { DialogFooter } from "@/components/ui/dialog";
 import { Avatar } from "@/components/ui/misc";
 import { MarkdownEditor } from "@/components/files/markdown-editor";
 import { useApp } from "@/components/shell/app-context";
-import { PRIORITIES, PROJECT_COLORS, PROJECT_STATUSES } from "@/lib/constants";
+import { PRIORITIES, PROJECT_COLORS, PROJECT_PHASES, PROJECT_STATUSES } from "@/lib/constants";
 import { createProject, updateProject } from "@/server/actions/projects";
 import { cn } from "@/lib/utils";
 
@@ -24,6 +24,7 @@ const schema = z
     color: z.string(),
     status: z.enum(["planning", "active", "on_hold", "completed"]),
     priority: z.enum(["critical", "high", "medium", "low"]),
+    phase: z.enum(["planning", "development", "testing", "staging", "production", "maintenance", "retired"]),
     ownerId: z.string().optional(),
     startDate: z.string().optional(),
     dueDate: z.string().optional(),
@@ -38,7 +39,7 @@ export function ProjectForm({ initial, projectId, workflows, onDone }: { initial
   const router = useRouter();
   const { register, handleSubmit, control, watch, setValue, formState } = useForm<ProjectFormValues>({
     resolver: zodResolver(schema),
-    defaultValues: { name: "", key: "", description: "", category: "", color: PROJECT_COLORS[0], status: "active", priority: "medium", ownerId: app.me.id, startDate: "", dueDate: "", memberIds: [], workflowId: workflows.find((w) => w.isDefault)?.id, ...initial },
+    defaultValues: { name: "", key: "", description: "", category: "", color: PROJECT_COLORS[0], status: "active", priority: "medium", phase: "development", ownerId: app.me.id, startDate: "", dueDate: "", memberIds: [], workflowId: workflows.find((w) => w.isDefault)?.id, ...initial },
   });
   const color = watch("color");
   const memberIds = watch("memberIds");
@@ -46,7 +47,7 @@ export function ProjectForm({ initial, projectId, workflows, onDone }: { initial
 
   const onSubmit = handleSubmit(async (v) => {
     const res = editing
-      ? await updateProject({ id: projectId!, data: { name: v.name, description: v.description || null, category: v.category || null, color: v.color, status: v.status, priority: v.priority, ownerId: v.ownerId || null, startDate: v.startDate || null, dueDate: v.dueDate || null, workflowId: v.workflowId } })
+      ? await updateProject({ id: projectId!, data: { name: v.name, description: v.description || null, category: v.category || null, color: v.color, status: v.status, priority: v.priority, phase: v.phase, ownerId: v.ownerId || null, startDate: v.startDate || null, dueDate: v.dueDate || null, workflowId: v.workflowId } })
       : await createProject({ ...v, description: v.description || null, category: v.category || null, ownerId: v.ownerId || null, startDate: v.startDate || null, dueDate: v.dueDate || null });
     if (!res.ok) return toast.error(res.error);
     toast.success(editing ? "Project updated" : "Project created");
@@ -75,6 +76,9 @@ export function ProjectForm({ initial, projectId, workflows, onDone }: { initial
       <div className="grid gap-3 sm:grid-cols-3">
         <Field label="Status"><NativeSelect {...register("status")}>{PROJECT_STATUSES.filter((s) => s.value !== "archived").map((s) => <option key={s.value} value={s.value}>{s.label}</option>)}</NativeSelect></Field>
         <Field label="Priority"><NativeSelect {...register("priority")}>{PRIORITIES.map((p) => <option key={p.value} value={p.value}>{p.label}</option>)}</NativeSelect></Field>
+        <Field label="Phase" hint={PROJECT_PHASES.find((x) => x.value === watch("phase"))?.description}>
+          <NativeSelect {...register("phase")}>{PROJECT_PHASES.map((x) => <option key={x.value} value={x.value}>{x.label}</option>)}</NativeSelect>
+        </Field>
         <Field label="Category"><Input {...register("category")} placeholder="Marketing, Product…" /></Field>
         <Field label="Owner"><NativeSelect {...register("ownerId")}>{app.members.filter((m) => m.isActive && m.role !== "viewer").map((m) => <option key={m.id} value={m.id}>{m.name}</option>)}</NativeSelect></Field>
         <Field label="Start date"><Input type="date" {...register("startDate")} /></Field>
