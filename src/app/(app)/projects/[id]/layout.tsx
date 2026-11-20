@@ -11,6 +11,9 @@ import { PhaseBadge } from "@/components/projects/phase-badge";
 import { ProjectActions } from "@/components/projects/project-actions";
 import { QuickAddButton } from "@/components/tasks/quick-add-button";
 import { ImportDialog } from "@/components/work/import-dialog";
+import { AssignAllButton } from "@/components/projects/assign-all-button";
+import { sql } from "drizzle-orm";
+import { db } from "@/db";
 import { PROJECT_STATUSES } from "@/lib/constants";
 import { fmtDate } from "@/lib/utils";
 
@@ -21,6 +24,14 @@ export default async function ProjectLayout({ params, children }: { params: { id
   const p = access.project;
   const ctx = await getProjectContext(p.id, p.workflowId);
   const st = PROJECT_STATUSES.find((s) => s.value === p.status)!;
+  const canBeAssigned = access.canEdit && user.role !== "viewer" && access.memberRole !== "viewer" && (!!access.memberRole || p.ownerId === user.id || access.canManage);
+  const counts = canBeAssigned
+    ? ((await db.execute(sql`
+        SELECT count(*) FILTER (WHERE t.assignee_id IS NULL AND s.category NOT IN ('done','cancelled'))::int AS unassigned,
+               count(*) FILTER (WHERE (t.assignee_id IS NULL OR t.assignee_id <> ${user.id}) AND s.category NOT IN ('done','cancelled'))::int AS open,
+               count(*) FILTER (WHERE t.assignee_id IS NULL OR t.assignee_id <> ${user.id})::int AS "all"
+        FROM tasks t JOIN workflow_statuses s ON s.id = t.status_id WHERE t.project_id = ${p.id}`)).rows[0] as { unassigned: number; open: number; all: number })
+    : null;
   return (
     <div className="mx-auto max-w-[1600px] animate-fade-in">
       <div className="mb-1 flex items-center gap-1 text-xs text-muted-foreground"><Link href="/projects" className="hover:text-foreground">Projects</Link><ChevronRight className="size-3" /><span>{p.name}</span></div>
@@ -37,6 +48,7 @@ export default async function ProjectLayout({ params, children }: { params: { id
         </div>
         <div className="ml-auto flex items-center gap-2">
           <AvatarStack users={ctx.members} max={5} size={26} />
+          {counts && <AssignAllButton projectId={p.id} projectName={p.name} counts={counts} />}
           {access.canEdit && <ImportDialog projectId={p.id} />}
           {access.canEdit && <QuickAddButton projectId={p.id}><Plus /> Add task</QuickAddButton>}
           <ProjectActions id={p.id} projectKey={p.key} name={p.name} archived={!!p.archivedAt} canManage={access.canManage} />

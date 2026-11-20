@@ -11,6 +11,7 @@ import {
   projects,
   sprints,
   milestones,
+  projectMembers,
   taskDependencies,
   taskLabels,
   taskWatchers,
@@ -407,3 +408,38 @@ export const deleteTimeLog = action(z.object({ id: zId }), async ({ id }, user) 
   revalidateTaskViews(log.taskId);
   return { ok: true };
 });
+
+/* ───── assign all to me ───── */
+
+export const assignAllToMe = action(
+  z.object({ projectId: zId, scope: z.enum(["unassigned", "open", "all"]) }),
+  async ({ projectId, scope }, user) => {
+    const { project, memberRole, canManage } = await requireProject(user, projectId, "edit");
+    if (user.role === "viewer" || memberRole === "viewer") throw new AuthzError("Viewers can't be assigned tasks.");
+    // Make sure the person can actually work on the project (admins/PMs who manage it may not be listed yet).
+    if (!memberRole && project.ownerId !== user.id) {
+      if (!canManage) throw new AuthzError("You need to be a member of this project.");
+      await db.insert(projectMembers).values({ projectId, userId: user.id, role: "member" }).onConflictDoNothing();
+    }
+    const where = and(
+      eq(tasks.projectId, projectId),
+      sql`(${tasks.assigneeId} IS NULL OR ${tasks.assigneeId} <> ${user.id})`,
+      scope === "unassigned" ? isNull(tasks.assigneeId) : undefined,
+      scope !== "all" ? sql`${tasks.statusId} IN (SELECT id FROM workflow_statuses WHERE category NOT IN ('done','cancelled'))` : undefined,
+    );
+    const affected = await db.select({ id: tasks.id, assigneeId: tasks.assigneeId }).from(tasks).where(where);
+    if (!affected.length) return { updated: 0 };
+    const ids = affected.map((t) => t.id);
+    await db.transaction(async (tx) => {
+      await tx.update(tasks).set({ assigneeId: user.id, updatedAt: new Date() }).where(inArray(tasks.id, ids));
+      await tx.insert(taskWatchers).values(ids.map((taskId) => ({ taskId, userId: user.id }))).onConflictDoNothing();
+      await logActivity(tx, { orgId: user.orgId, actorId: user.id, entity: "project", action: "assigned_all", projectId, meta: { count: ids.length, scope } });
+      // Tell anyone who lost tasks, once per person.
+      const lost = affected.reduce<Record<string, number>>((m, t) => (t.assigneeId ? ((m[t.assigneeId] = (m[t.assigneeId] ?? 0) + 1), m) : m), {});
+      for (const [uid, n] of Object.entries(lost))
+        await notify(tx, { orgId: user.orgId, actorId: user.id, userIds: [uid], type: "updated", title: `${user.name} took over ${n} of your task${n > 1 ? "s" : ""} in ${project.name}`, link: `/projects/${projectId}/list?assignee=${user.id}` });
+    });
+    revalidateTaskViews();
+    return { updated: ids.length };
+  },
+);
